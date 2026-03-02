@@ -217,17 +217,6 @@ cv4pve-diag --host=pve.domain.com --username=root@pam --password=secret --ignore
 
 </details>
 
-<details>
-<summary><strong>Export Data</strong></summary>
-
-#### Export Collected Data
-```bash
-# Export diagnostic data to JSON file
-cv4pve-diag --host=pve.domain.com --username=root@pam --password=secret export-collect
-```
-
-</details>
-
 ### Configuration Files
 
 <details>
@@ -329,15 +318,16 @@ Create rules to ignore specific issues using regex patterns:
 ```json
 [
   {
-    "Id": "105",
+    "Id": "nodes/pve01/qemu/105",
     "Context": "Qemu",
     "SubContext": "Protection"
   }
 ]
 ```
 
-**Pattern matching:**
-- Exact match: `"Id": "105"` - ignora solo VM 105
+**Pattern matching (regex):**
+- Exact match: `"Id": "nodes/pve01/qemu/105"` - ignora solo VM 105 su pve01
+- Node match: `"Id": "nodes/pve01/.*"` - ignora tutti i problemi su pve01
 - Partial match: `"Description": ".*test.*"` - ignora se descrizione contiene "test"
 - All match: `"Id": ".*"` - ignora tutti gli ID (usa con Context/SubContext specifici)
 
@@ -379,22 +369,27 @@ Create rules to ignore specific issues using regex patterns:
 ### Example Output
 
 ```txt
------------------------------------------------------------------------------------------------------------------------------------------
-| Id                             | Description                                                  | Context | SubContext   | Gravity  |
------------------------------------------------------------------------------------------------------------------------------------------
-| pve2                           | 1 Replication has errors                                     | Node    | Replication  | Critical |
-| pve2                           | Zfs 'rpool' health problem                                   | Node    | Zfs          | Critical |
-| 312                            | Unknown resource qemu                                        | Qemu    | Status       | Critical |
-| pve3                           | Node not online                                              | Node    | Status       | Warning  |
-| local-zfs:vm-117-disk-1        | Image Orphaned                                               | Storage | Image        | Warning  |
-| 121                            | Qemu Agent not enabled                                       | Qemu    | Agent        | Warning  |
-| 103                            | cv4pve-autosnap not configured                               | Qemu    | AutoSnapshot | Warning  |
-| 115                            | vzdump backup not configured                                 | Qemu    | Backup       | Warning  |
-| 117                            | Unused disk0                                                 | Qemu    | Hardware     | Warning  |
-| 121                            | 10 snapshots older than 1 month                              | Qemu    | Snapshot     | Warning  |
-| pve1                           | 3 Update availble                                            | Node    | Update       | Info     |
-| 109                            | For more performance switch 'scsi0' hdd to VirtIO            | Qemu    | VirtIO       | Info     |
------------------------------------------------------------------------------------------------------------------------------------------
++-----------------------------+--------------------------------------------------------------------+---------+-----------------+----------+
+| Id                          | Description                                                        | Context | SubContext      | Gravity  |
++-----------------------------+--------------------------------------------------------------------+---------+-----------------+----------+
+| nodes/pve02                 | Nodes package version not equal                                    | Node    | PackageVersions | Critical |
+| nodes/pve02/qemu/203        | Disk 'scsi0' disabled for backup                                   | Qemu    | Backup          | Critical |
+| nodes/pve01/lxc/100         | Disk 'rootfs' disabled for backup                                  | Lxc     | Backup          | Critical |
+| nodes/pve01/qemu/1030       | Memory (rrd Day AVERAGE) usage 92.9% - 5.99 GB of 6.44 GB         | Qemu    | Usage           | Critical |
+| nodes/pve02                 | Nodes hosts configuration not equal                                | Node    | Hosts           | Warning  |
+| nodes/pve01/storage/local   | Image Orphaned 51.54 GB file vm-106-disk-1                         | Storage | Image           | Warning  |
+| nodes/pve01/storage/pbs01   | Storage usage 75% - 2.42 TB of 3.22 TB                            | Storage | Usage           | Warning  |
+| nodes/pve02/qemu/106        | Qemu Agent not enabled                                             | Qemu    | Agent           | Warning  |
+| nodes/pve02/qemu/999        | vzdump backup not configured                                       | Qemu    | Backup          | Warning  |
+| nodes/pve02/lxc/101         | 'cv4pve-autosnap' not configured                                   | Lxc     | AutoSnapshot    | Warning  |
+| nodes/pve01/qemu/1030       | Cdrom mounted                                                      | Qemu    | Hardware        | Warning  |
+| nodes/pve01/qemu/1010       | OS 'Microsoft Windows 10/2016/2019' not maintained from vendor!    | Qemu    | OSNotMaintained | Warning  |
+| nodes/pve01/qemu/1006       | 4 snapshots older than 1 month                                     | Qemu    | SnapshotOld     | Warning  |
+| nodes/pve01/qemu/1010       | Start on boot not enabled                                          | Qemu    | StartOnBoot     | Warning  |
+| nodes/pve02                 | 26 Update available                                                | Node    | Update          | Info     |
+| nodes/pve01/qemu/1000       | For production environment is better VM Protection = enabled       | Qemu    | Protection      | Info     |
+| nodes/pve01/qemu/1006       | For more performance switch 'net0' network to VirtIO               | Qemu    | VirtIO          | Info     |
++-----------------------------+--------------------------------------------------------------------+---------+-----------------+----------+
 ```
 
 ---
@@ -530,13 +525,6 @@ Create ignored issues template
 
 ```bash
 cv4pve-diag --host=pve.local --username=root@pam --password=secret create-ignored-issues
-```
-
-#### export-collect
-Export collected diagnostic data
-
-```bash
-cv4pve-diag --host=pve.local --username=root@pam --password=secret export-collect
 ```
 
 </details>

@@ -5,7 +5,6 @@
 
 using System.Text.Json;
 using Corsinvest.ProxmoxVE.Api.Console.Helpers;
-using Corsinvest.ProxmoxVE.Api.Extension.Utils;
 using Corsinvest.ProxmoxVE.Api.Shared.Utils;
 using Corsinvest.ProxmoxVE.Diagnostic.Api;
 using Microsoft.Extensions.Logging;
@@ -43,67 +42,33 @@ app.AddCommand("create-ignored-issues", $"Create File ignored issues ({ignoredIs
        Console.Out.WriteLine($"Create file: {ignoredIssuesFileName}");
    });
 
-async Task<InfoHelper.Info> GetInfo()
-    => await InfoHelper.CollectAsync(await app.ClientTryLoginAsync(loggerFactory), true, 2, false, false);
-
-var fileExport = "data.json";
-app.AddCommand("export-collect", $"Export collect data collect to {fileExport}")
+app.AddCommand("execute", "Execute diagnostic and print result to console")
    .SetAction(async (action) =>
    {
-       File.WriteAllText(fileExport, JsonSerializer.Serialize(await GetInfo(), new JsonSerializerOptions { WriteIndented = true }));
-       Console.Out.WriteLine($"Exported {fileExport}!");
-   });
+       var client = await app.ClientTryLoginAsync(loggerFactory);
 
-var cmdExamineCollect = app.AddCommand("examine-collect", $"Examine collect data collect from {fileExport}");
-cmdExamineCollect.Hidden = true;
-cmdExamineCollect.SetAction((action) =>
-{
-    var info = JsonSerializer.Deserialize<InfoHelper.Info>(File.ReadAllText(fileExport))!;
-    Print(info,
-          action.GetValue(optSettingsFile)!,
-          action.GetValue(optIgnoredIssuesFile)!,
-          action.GetValue(optShowIgnoredIssues),
-          action.GetValue(optOutput));
-});
+       var settings = !string.IsNullOrWhiteSpace(action.GetValue(optSettingsFile))
+                           ? JsonSerializer.Deserialize<Settings>(File.ReadAllText(action.GetValue(optSettingsFile)!))
+                           : new Settings();
 
-app.AddCommand("execute", $"Execute diagnostic and print result to console")
-   .SetAction(async (action) =>
-   {
-       Print(await GetInfo(),
-             action.GetValue(optSettingsFile)!,
-             action.GetValue(optIgnoredIssuesFile)!,
-             action.GetValue(optShowIgnoredIssues)!,
-             action.GetValue(optOutput));
+       var ignoredIssues = !string.IsNullOrWhiteSpace(action.GetValue(optIgnoredIssuesFile))
+                               ? JsonSerializer.Deserialize<List<DiagnosticResult>>(File.ReadAllText(action.GetValue(optIgnoredIssuesFile)!))
+                               : [];
+
+       var result = await Application.AnalyzeAsync(client, settings!, ignoredIssues!);
+
+       PrintResult([.. result.Where(a => !a.IsIgnoredIssue)], action.GetValue(optOutput));
+       if (action.GetValue(optShowIgnoredIssues)) { PrintResult([.. result.Where(a => a.IsIgnoredIssue)], action.GetValue(optOutput)); }
    });
 
 return await app.ExecuteAppAsync(args, loggerFactory.CreateLogger(typeof(Program)));
-
-void Print(InfoHelper.Info info,
-           string settingsFile,
-           string ignoredIssuesFile,
-           bool showIgnoredIssues,
-           TableGenerator.Output output)
-{
-    var settings = !string.IsNullOrWhiteSpace(settingsFile)
-                        ? JsonSerializer.Deserialize<Settings>(File.ReadAllText(settingsFile))
-                        : new Settings();
-
-    var ignoredIssues = !string.IsNullOrWhiteSpace(ignoredIssuesFile)
-                            ? JsonSerializer.Deserialize<List<DiagnosticResult>>(File.ReadAllText(ignoredIssuesFile))
-                            : [];
-
-    var result = Application.Analyze(info, settings!, ignoredIssues!);
-
-    PrintResult([.. result.Where(a => !a.IsIgnoredIssue)], output);
-    if (showIgnoredIssues) { PrintResult([.. result.Where(a => a.IsIgnoredIssue)], output); }
-}
 
 void PrintResult(ICollection<DiagnosticResult> data, TableGenerator.Output output)
 {
     var rows = data.OrderByDescending(a => a.Gravity)
                    .ThenBy(a => a.Context)
                    .ThenBy(a => a.SubContext)
-                   .Select(a => new object[] { a.Id, a.Description, a.Context, a.SubContext, a.Gravity });
+                   .Select(a => new object[] { a.Id, a.Description, a.Context, a.SubContext, a.Gravity});
 
     Console.Out.Write(TableGenerator.To(["Id", "Description", "Context", "SubContext", "Gravity"], rows, output));
 }
