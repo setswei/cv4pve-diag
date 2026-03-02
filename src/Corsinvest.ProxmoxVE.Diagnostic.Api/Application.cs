@@ -1122,7 +1122,7 @@ public class Application
                 return txt;
             }
 
-            result.AddRange(data.Where(a => GetValue(a.Usage, a.Size) >= ranges[i] 
+            result.AddRange(data.Where(a => GetValue(a.Usage, a.Size) >= ranges[i]
                                             && GetValue(a.Usage, a.Size) < ranges[i + 1])
                                 .Select(a => new DiagnosticResult
                                 {

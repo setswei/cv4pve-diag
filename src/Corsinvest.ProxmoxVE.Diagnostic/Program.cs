@@ -68,7 +68,7 @@ void PrintResult(ICollection<DiagnosticResult> data, TableGenerator.Output outpu
     var rows = data.OrderByDescending(a => a.Gravity)
                    .ThenBy(a => a.Context)
                    .ThenBy(a => a.SubContext)
-                   .Select(a => new object[] { a.Id, a.Description, a.Context, a.SubContext, a.Gravity});
+                   .Select(a => new object[] { a.Id, a.Description, a.Context, a.SubContext, a.Gravity });
 
     Console.Out.Write(TableGenerator.To(["Id", "Description", "Context", "SubContext", "Gravity"], rows, output));
 }
