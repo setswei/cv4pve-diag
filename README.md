@@ -147,6 +147,13 @@ sudo rpm -i cv4pve-diag-VERSION-ARCH.rpm
 
 ### macOS Installation
 
+**Option 1: Homebrew (Recommended)**
+```bash
+brew tap Corsinvest/tap
+brew install cv4pve-diag
+```
+
+**Option 2: Manual Installation**
 ```bash
 # Check available releases at: https://github.com/Corsinvest/cv4pve-diag/releases
 # Download specific version (replace VERSION with actual version)
