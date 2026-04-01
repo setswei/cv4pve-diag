@@ -2,6 +2,11 @@
 
 ---
 
+## [2.0.3] -- 2026-04-01
+
+### Improvements
+- **Homebrew Repository** - Added homebrew repository support
+
 ## [2.0.2] — 2026-03-25
 
 ### New checks
